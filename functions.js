@@ -7,7 +7,7 @@ Http.setReqestHeader({
 	"Authorization": "6211~UhALRSFjCu1Do3ZfMFKIziIONkxD6XDG87TBvkWkPjonud7SIu8037RX9f3d5UIO"
 
 })
-Http.onreadystatechange = function ReceivedCallback(e)=>{
+Http.onreadystatechange = function ReceivedCallback(e){
   if ( this.readyState == 4 & this.status ==200){
     console.log(Http.responseText);
   }
