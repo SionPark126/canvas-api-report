@@ -2,27 +2,24 @@
 
 
 function getCourses(){
-
+ console.log("working")
   var courses;
   const Http = new XMLHttpRequest();
   const url='/getData';
   Http.open("GET", url);
   Http.send();
-  // Http.setReqestHeader({
-  //   "Content-Type": "application/json",
-  // 	"Authorization": "6211~UhALRSFjCu1Do3ZfMFKIziIONkxD6XDG87TBvkWkPjonud7SIu8037RX9f3d5UIO"
-  //
-  // })
   Http.onreadystatechange = function ReceivedCallback(e){
     if ( this.readyState == 4 & this.status ==200){
-      courses = JSON.parse(this.responseText);
-  //    console.log("hi")
-    //  console.log(this.headers)
+      courses = this.responseText;
+      console.log(courses)
+    $("#result").innerHTML = courses
+
+
     }
   }
 
 
-  var arrayCourses = []
+  //var arrayCourses = []
   // courses[0] = courses[0].
   // for (var i=0; i <courses.length -1 ; i++){
   //   var courseName = courses[i].courseName;

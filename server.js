@@ -1,5 +1,5 @@
 const request = require('request-promise')
-require('request-debug')(request)
+
 const express = require("express");
 const http =require("http");
 var app = express();
@@ -26,37 +26,44 @@ console.log(token)
 //     "Authorization": " Bearer " + token
 //   }
 // })
-var canvasurl = "https://spu.beta.instructure.com/api/v1/accounts/16/courses?search_term=MUS&per_page=150&enrollment_term_id=36&rel=next"
-app.get('/getData', function (req, res){
-  var courses;
-  function makeAPIRrequest(canvasurl, data){
+
+var url = "https://spu.beta.instructure.com/api/v1/accounts/16/courses?search_term=MUS&per_page=100&enrollment_term_id=36&state[]=all"
+function makeAPIrequest(url, data){
     return request({
-      method: "GET",
-      uri: canvasurl,
-      json: true,
+      "method": "GET",
+      "uri": url,
+      "json": true,
+      "resolveWithFullResponse": true,
       headers:{
         "Authorization": " Bearer " + token
       }
-  }).then(function(err, response, body){
-    if(! data){
-      data =[]
-    }
-    data = data.concat(response.body);
-    console.log(data.length +" answers so far")
+    }).then(response =>{
+      if(! data){
+        data =[]
+      }
+      data = data.concat(response.body);
+      console.log(data.length +" answers so far")
+      console.log(response.headers.link.includes("next"));
 
-    console.log(response.headers.link.includes("next"));
+      if ( response.headers.link.includes("next")){
+        console.log("there is more");
+        var next =new RegExp(/<(.*)>/).exec(response.headers.link.split(",").filter(function(link){ return link.match(/rel="next"/) })[0])[1];
+        return makeAPIrequest(next, data);
+      }
+      //console.log(data)
+      return data;
+    });
+};
 
-    console.log(body);
-    if ( response.headers.link.includes("next")){
-      console.log("there is more");
-      var next =new RegExp(/<(.*)>/).exec(response.headers.link.split(",").filter(function(link){ return link.match(/rel="next"/) })[0])[1];
-      return makeAPIRequest(next, data);
-    }
-    res.send(data);
+app.get('/getData', async function (req, res){
+      var returneddata = await makeAPIrequest(url);
 
-      });
-    }
+      const newData = returneddata.map(({ id, name }) => ({ courseId: id, courseName: name }))
+      res.send(newData)
   });
+
+
+
 
 //  console.log("entered")
   // var dataForGraph=[]
