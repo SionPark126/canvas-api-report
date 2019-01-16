@@ -12,7 +12,9 @@ function getCourses(){
     if ( this.readyState == 4 & this.status ==200){
       courses = this.responseText;
       console.log(courses)
-    $("#result").innerHTML = courses
+
+
+    $("#result").html(courses);
 
 
     }
@@ -29,6 +31,11 @@ function getCourses(){
   //
   //   }
 //}
+
+}
+
+function getInstructors(){
+
 
 }
 

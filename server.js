@@ -26,8 +26,8 @@ console.log(token)
 //     "Authorization": " Bearer " + token
 //   }
 // })
-
-var url = "https://spu.beta.instructure.com/api/v1/accounts/16/courses?search_term=MUS&per_page=100&enrollment_term_id=36&state[]=all"
+var finished = false;
+var url = "https://spu.beta.instructure.com/api/v1/accounts/16/courses?search_term=individual instruction&per_page=100&enrollment_term_id=36&state[]=all"
 function makeAPIrequest(url, data){
     return request({
       "method": "GET",
@@ -41,7 +41,7 @@ function makeAPIrequest(url, data){
       if(! data){
         data =[]
       }
-      data = data.concat(response.body);
+      data = data.concat( response.body);
       console.log(data.length +" answers so far")
       console.log(response.headers.link.includes("next"));
 
@@ -50,15 +50,48 @@ function makeAPIrequest(url, data){
         var next =new RegExp(/<(.*)>/).exec(response.headers.link.split(",").filter(function(link){ return link.match(/rel="next"/) })[0])[1];
         return makeAPIrequest(next, data);
       }
-      //console.log(data)
+      finished = true;
       return data;
-    });
+  })
+  //.map(({id, name})=>({courseId: id, courseName: name}))
+    // .then(data => data.map(({id, name })=>({courseId: id, courseName: name})))
+    // .then(data =>{
+    //     console.log(data)
+
+
+    //wq  }
+    // request({
+    //   "method": "POST",
+    //   "uri": "https://spu.beta.instructure.com/api/v1/courses/"+data.id+"/users?enrollment_type[]=teacher"
+    //   "json": true,
+    //   "resolveWithFullResponse": true,
+    //   headers:{
+    //     "Authorization": " Bearer " + token
+    //   }
+
+
+  //  });
 };
 
 app.get('/getData', async function (req, res){
       var returneddata = await makeAPIrequest(url);
-
       const newData = returneddata.map(({ id, name }) => ({ courseId: id, courseName: name }))
+      if (finished = true){
+        for (int i =0; i< data.length(); i++){
+          return request({
+            "method": "GET",
+            "uri": "https://spu.beta.instructure.com/api/v1/courses/"+data.id+"/users?enrollment_type[]=teacher"
+            "json": true,
+            "resolveWithFullResponse": true,
+            headers:{
+              "Authorization": " Bearer " + token
+            }
+          })
+
+      }
+
+
+
       res.send(newData)
   });
 
