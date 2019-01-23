@@ -1,9 +1,8 @@
 
 
-
+var courses;
 function getCourses(){
  console.log("working")
-  var courses;
   const Http = new XMLHttpRequest();
   const url='/getData';
   Http.open("GET", url);
@@ -12,11 +11,7 @@ function getCourses(){
     if ( this.readyState == 4 & this.status ==200){
       courses = this.responseText;
       console.log(courses)
-
-
     $("#result").html(courses);
-
-
     }
   }
 
@@ -34,8 +29,13 @@ function getCourses(){
 
 }
 
-function getInstructors(){
-
+function sortData(){
+  console.log(typeof courses)
+  $.ajax({
+    type: "POST",
+    url: '/sortData',
+    data: courses
+  });
 
 }
 
