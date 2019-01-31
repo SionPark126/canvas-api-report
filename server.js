@@ -26,7 +26,7 @@ console.log(token)
 //     "Authorization": " Bearer " + token
 //   }
 // })
-var url = "https://spu.beta.instructure.com/api/v1/accounts/16/courses?search_term=individual instruction - piano&per_page=100&enrollment_term_id=38"
+var url = "https://spu.beta.instructure.com/api/v1/accounts/16/courses?search_term=individual instruction - &per_page=100&enrollment_term_id=38"
 function makeAPIrequest(url, data){
     return request({
       "method": "GET",
@@ -73,7 +73,7 @@ function makeAPIrequest(url, data){
   //  });
 };
 function getInstructors(courseId){
-  return request({
+   return request({
     "method": "GET",
     "uri": "https://spu.beta.instructure.com/api/v1/courses/"+courseId+"/users?enrollment_type[]=teacher",
     "json": true,
@@ -82,91 +82,220 @@ function getInstructors(courseId){
       "Authorization": " Bearer " + token
     }
   }).then(response =>{
-    //  console.log("returned instructor id"+ response.body)
+      console.log(response.body)
+     //response.status(204).send();
       return response.body[0]
   }).catch(err =>{
+    console.log("Instructor getting error")
     console.log(err)
   });
 };
 
 async function sortData(data){
-  var instructorIds =[]
-
+  var instructorIds =[];
+  console.log(data)
     for ( var i =0; i< data.length; i++){
         instructorIds.push(await getInstructors(data[i].courseId));
     }
-  //  console.log("Instructor Ids "+ instructorIds);
-    return instructorIds
+    console.log(instructorIds);
+    return instructorIds;
 }
 
 //take out course name and CRNs from the string
-function crossListing(data){
+async function createCourse(data){
   console.log("entered")
-  console.log(data);
-  var regexName = "/(MUS[0-9]{4}/?)+/g"
-  var regexCrn = "/([0-9]{5}/?)+/g"
-  var courseName ="";
-  var crn ="";
+  var regexName = /(MUS[0-9]{4}\/?)+/g
+  var regexCrn = /([0-9]{5}\/?)+/g
+  var regexInstrument = /-\s?.*?\s\(/g
+  var coursesToCrosslist = new Object;
   for (var i in data){
-    if(data[i].length > 1){
+    var courseName ="";
+    var crn ="";
+    var courseId = "";
+    var instrument = "";
+
+    //var instrument = new Set();
+    // var sisId ;
+    if(data[i].length < 3){
       continue;
     }
-    for (var j = 0; j < data[i][j].length; j++){
+    // sisId = i
+
+    for (var j = 0; j < data[i].length; j += 2 ){
       courseName += data[i][j].match(regexName);
+      var instrumentSubString;
+      //instrument.add(data[i][j].match(regexInstrument));
       crn += data[i][j].match(regexCrn);
-      if(j == data[i][j].length-1){
+      instrumentSubString = data[i][j].match(regexInstrument)[0];
+      instrumentSubString = instrumentSubString.substring(2, instrumentSubString.length - 2);
+      if (instrument.includes(instrumentSubString))
+      {
+        continue;
+      }
+      else if( j==0){
+        instrument += instrumentSubString;
+      }
+      else{
+        instrument += "/";
+        instrument += instrumentSubString;
+      }
+
+
+      if(j == parseInt(data[i].length-2)){
         break;
       }
-      courseName += "/";
-      crn += "/"
-      console.log(courseName);
-      console.log(crn);
+      else{
+        courseName += "/";
+        crn += "/";
+      }
     }
+    for (var j = 0; j < data[i].length; j += 2 ){
+      if(coursesToCrosslist[courseName+"_m"+i+"_"+"201893"] == undefined){
+        coursesToCrosslist[courseName+"_m"+i+"_"+"201893"] = [];
+      }
+      coursesToCrosslist[courseName+"_m"+i+"_"+"201893"].push(data[i][j+1]);
+    }
+    console.log("CourseName " +courseName);
+    console.log("CRN " +crn);
+    console.log("Instrument " +instrument);
+    await apiRequestToCreateCourse(instrument, courseName, crn, i);
+
+
   }
-  return;
+  console.log(coursesToCrosslist);
+  return coursesToCrosslist;
 }
 
-function createCourse(){
+function apiRequestToCreateCourse(instrument,courseName, crn, i){
   return request({
     "method": "POST",
-    "uri": "https://spu.beta.instructure.com/api/v1/courses/",
+    "uri": "https://spu.beta.instructure.com/api/v1/accounts/16/courses",
     json: true,
     form:{
-      "course[name]": "Individual Instruction - piano " + "(" ,
-      "course[course_code]": "133"
+      "course[name]": "Individual Instruction - " + instrument + " (" + courseName + " - " +crn +")",
+      "course[course_code]": courseName + "Individual Instruction - " +instrument,
+      "course[term_id]": 38,
+      "course[sis_course_id]": courseName+"_m"+i+"_"+"201893"
     },
     headers:{
       "Authorization": " Bearer " + token
     }
   }).then(response =>{
     //  console.log("returned instructor id"+ response.body)
-      return response.body[0]
+    response.status(204).send();
   }).catch(err =>{
+    console.log("Create Course Error");
+    console.log(err)
+  });
+
+}
+
+async function getSectionIds(coursesToCrosslist){
+  var sectionsToCrosslist = new Object;
+  for (var i in coursesToCrosslist){
+    for (var j = 0; j<coursesToCrosslist[i].length; j++){
+      var sections = [];
+      var results;
+      results = await getSections(coursesToCrosslist[i][j]);
+      console.log(results)
+      if(results == undefined){
+        continue;
+      }
+      else{
+
+       for (var k= 0; k< results.length; k++){
+          if (sectionsToCrosslist[i] == undefined){
+            sectionsToCrosslist[i] = [];
+          }
+          sectionsToCrosslist[i].push(results[0].sectionId);
+        }
+      }
+    }
+  }
+  console.log(sectionsToCrosslist)
+  return sectionsToCrosslist;
+
+}
+
+function getSections(courseNum){
+  console.log(courseNum);
+  return request({
+    "method": "GET",
+    "uri": "https://spu.beta.instructure.com/api/v1/courses/" + courseNum +"/sections",
+    json: true,
+    "resolveWithFullResponse": true,
+    headers:{
+      "Authorization": " Bearer " + token
+    }
+  }).then(response =>{
+      if (response.body != []){
+        return response.body.map(({id})=>({sectionId: id}))
+      }
+      return 0;
+  }).catch(err =>{
+    console.log("Get Sections Error");
+    console.log(err)
+  });
+}
+
+async function crossList(results){
+  console.log("Emntered to crosslist courses");
+  for (var i in results){
+    for (var j = 0; j< results[i].length; j++){
+      await apiRequestToCrossList(results[i][j], i);
+    }
+  }
+
+  return 1;
+
+}
+
+function apiRequestToCrossList(section,course){
+  course = course.replace(/\//ig,"%2f");
+  console.log(course);
+  return request({
+    "method": "POST",
+    "uri": "https://spu.beta.instructure.com/api/v1/sections"+section +"/sis_course_id:"+course,
+    json: true,
+    headers:{
+      "Authorization": " Bearer " + token
+    }
+  }).then(response =>{
+    console.log(response.body)
+    response.status(204).send();
+  }).catch(err =>{
+    console.log("Crosslisting error");
     console.log(err)
   });
 }
 
 app.get('/getData', async function (req, res){
       var returneddata = await makeAPIrequest(url);
-      const data = returneddata.map(({ id, name }) => ({ courseId: id, courseName: name }))
-      console.log(data)
 
-      var sorted = await sortData(data)
-;
-       console.log(sorted)
+      const data = returneddata.map(({ id, name }) => ({ courseId: id, courseName: name }))
+      //console.log(data)
+
+      var sorted = await sortData(data);
+
+       //console.log(sorted)
       var namingObject = new Object;
       for (var i=0; i< sorted.length; i++){
         if (sorted[i] == undefined){
           continue;
         }
-        if (namingObject[sorted[i].name] == undefined){
-          namingObject[sorted[i].name] = [];
+        if (namingObject[sorted[i].sis_user_id] == undefined){
+          namingObject[sorted[i].sis_user_id] = [];
         }
-        namingObject[sorted[i].name].push(data[i].courseName);
+        namingObject[sorted[i].sis_user_id].push(data[i].courseName);
+        namingObject[sorted[i].sis_user_id].push(data[i].courseId);
       }
 
-      //console.log(namingObject);
-      await crossListing(namingObject);
+      console.log(namingObject);
+       var results =  await createCourse(namingObject);
+
+       var sectionsToCrosslist = await getSectionIds(results);
+       console.log(sectionsToCrosslist);
+       var done = await crossList(sectionsToCrosslist);
 
       res.send("completed");
   });
