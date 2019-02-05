@@ -82,7 +82,7 @@ function getInstructors(courseId){
       "Authorization": " Bearer " + token
     }
   }).then(response =>{
-      console.log(response.body)
+    //  console.log(response.body)
      //response.status(204).send();
       return response.body[0]
   }).catch(err =>{
@@ -93,7 +93,7 @@ function getInstructors(courseId){
 
 async function sortData(data){
   var instructorIds =[];
-  console.log(data)
+
     for ( var i =0; i< data.length; i++){
         instructorIds.push(await getInstructors(data[i].courseId));
     }
@@ -104,6 +104,7 @@ async function sortData(data){
 //take out course name and CRNs from the string
 async function createCourse(data){
   console.log("entered")
+
   var regexName = /(MUS[0-9]{4}\/?)+/g
   var regexCrn = /([0-9]{5}\/?)+/g
   var regexInstrument = /-\s?.*?\s\(/g
@@ -128,6 +129,16 @@ async function createCourse(data){
       crn += data[i][j].match(regexCrn);
       instrumentSubString = data[i][j].match(regexInstrument)[0];
       instrumentSubString = instrumentSubString.substring(2, instrumentSubString.length - 2);
+
+
+      if(j == parseInt(data[i].length-2)){
+        break;
+      }
+      else{
+        courseName += "/";
+        crn += "/";
+      }
+
       if (instrument.includes(instrumentSubString))
       {
         continue;
@@ -141,24 +152,18 @@ async function createCourse(data){
       }
 
 
-      if(j == parseInt(data[i].length-2)){
-        break;
-      }
-      else{
-        courseName += "/";
-        crn += "/";
-      }
+
     }
-    for (var j = 0; j < data[i].length; j += 2 ){
+    for (var j = 1; j < data[i].length; j += 2 ){
       if(coursesToCrosslist[courseName+"_m"+i+"_"+"201893"] == undefined){
         coursesToCrosslist[courseName+"_m"+i+"_"+"201893"] = [];
       }
-      coursesToCrosslist[courseName+"_m"+i+"_"+"201893"].push(data[i][j+1]);
+      coursesToCrosslist[courseName+"_m"+i+"_"+"201893"].push(data[i][j]);
     }
     console.log("CourseName " +courseName);
     console.log("CRN " +crn);
     console.log("Instrument " +instrument);
-    await apiRequestToCreateCourse(instrument, courseName, crn, i);
+    //await apiRequestToCreateCourse(instrument, courseName, crn, i);
 
 
   }
@@ -182,7 +187,7 @@ function apiRequestToCreateCourse(instrument,courseName, crn, i){
     }
   }).then(response =>{
     //  console.log("returned instructor id"+ response.body)
-    response.status(204).send();
+    //response.status(204).send();
   }).catch(err =>{
     console.log("Create Course Error");
     console.log(err)
@@ -239,7 +244,7 @@ function getSections(courseNum){
 }
 
 async function crossList(results){
-  console.log("Emntered to crosslist courses");
+  console.log("Entered to crosslist courses");
   for (var i in results){
     for (var j = 0; j< results[i].length; j++){
       await apiRequestToCrossList(results[i][j], i);
@@ -253,16 +258,15 @@ async function crossList(results){
 function apiRequestToCrossList(section,course){
   course = course.replace(/\//ig,"%2f");
   console.log(course);
+  console.log(section);
   return request({
     "method": "POST",
-    "uri": "https://spu.beta.instructure.com/api/v1/sections"+section +"/sis_course_id:"+course,
+    "uri": "https://spu.beta.instructure.com/api/v1/sections/"+section +"/crosslist/sis_course_id:"+course,
     json: true,
     headers:{
       "Authorization": " Bearer " + token
     }
   }).then(response =>{
-    console.log(response.body)
-    response.status(204).send();
   }).catch(err =>{
     console.log("Crosslisting error");
     console.log(err)
@@ -290,10 +294,10 @@ app.get('/getData', async function (req, res){
         namingObject[sorted[i].sis_user_id].push(data[i].courseId);
       }
 
-      console.log(namingObject);
+    //  console.log(namingObject);
        var results =  await createCourse(namingObject);
 
-       var sectionsToCrosslist = await getSectionIds(results);
+      var sectionsToCrosslist = await getSectionIds(results);
        console.log(sectionsToCrosslist);
        var done = await crossList(sectionsToCrosslist);
 
