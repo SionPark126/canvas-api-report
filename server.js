@@ -1,11 +1,13 @@
-const request = require('request-promise')
-
+const request = require('request-promise');
 const express = require("express");
 const http =require("http");
 var app = express();
 var port = 3000;
 
+//Create Server
 var httpServer =http.createServer(app);
+
+//
 httpServer.listen(port, function(){
   console.log("server running at http:localhost:3000");
 });
@@ -163,7 +165,7 @@ async function createCourse(data){
     console.log("CourseName " +courseName);
     console.log("CRN " +crn);
     console.log("Instrument " +instrument);
-    //await apiRequestToCreateCourse(instrument, courseName, crn, i);
+    await apiRequestToCreateCourse(instrument, courseName, crn, i);
 
 
   }
@@ -294,7 +296,7 @@ app.get('/getData', async function (req, res){
         namingObject[sorted[i].sis_user_id].push(data[i].courseId);
       }
 
-    //  console.log(namingObject);
+
        var results =  await createCourse(namingObject);
 
       var sectionsToCrosslist = await getSectionIds(results);
@@ -304,14 +306,6 @@ app.get('/getData', async function (req, res){
       res.send("completed");
   });
 
-  // app.post('/sortData', function (req, res){
-  //
-  //         // var data = res;
-  //         console.log(req);
-  //
-
-  //       res.send(data)
-  //   });
 
 
 //  console.log("entered")
