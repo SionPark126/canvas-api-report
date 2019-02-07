@@ -105,7 +105,7 @@ async function sortData(data){
 
 //take out course name and CRNs from the string
 async function createCourse(data){
-  console.log("entered")
+  // console.log(data)
 
   var regexName = /(MUS[0-9]{4}\/?)+/g
   var regexCrn = /([0-9]{5}\/?)+/g
@@ -125,7 +125,17 @@ async function createCourse(data){
     // sisId = i
 
     for (var j = 0; j < data[i].length; j += 2 ){
+      console.log(courseName);
+      console.log(typeof data[i][j].match(regexName));
+      console.log(data[i][j].match(regexName)[0]);
+      if (courseName.includes(data[i][j].match(regexName)[0])){
+        console.log("Entered")
+        console.log(courseName);
+        console.log(data[i][j].match(regexName))
+        continue;
+      }
       courseName += data[i][j].match(regexName);
+
       var instrumentSubString;
       //instrument.add(data[i][j].match(regexInstrument));
       crn += data[i][j].match(regexCrn);
@@ -156,15 +166,16 @@ async function createCourse(data){
 
 
     }
+    console.log("Final couse name"+ courseName)
     for (var j = 1; j < data[i].length; j += 2 ){
       if(coursesToCrosslist[courseName+"_m"+i+"_"+"201893"] == undefined){
         coursesToCrosslist[courseName+"_m"+i+"_"+"201893"] = [];
       }
       coursesToCrosslist[courseName+"_m"+i+"_"+"201893"].push(data[i][j]);
     }
-    console.log("CourseName " +courseName);
-    console.log("CRN " +crn);
-    console.log("Instrument " +instrument);
+  //  console.log("CourseName " +courseName);
+  //  console.log("CRN " +crn);
+  //  console.log("Instrument " +instrument);
     await apiRequestToCreateCourse(instrument, courseName, crn, i);
 
 
