@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title> Canvas course report </title>
+
+   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+   <script type="text/javascript" src="../functions.js"></script>
+   <link rel = "stylesheet" href ="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+  <div class ="container">
+    <h1> Canvas Course Report </h1>
+          <h4> Download a report of all courses </h4>
+            <form action="/downloadInfo" method="GET" >
+              <button type="submit" class="btn btn-light">Download</button>
+            </form>
+          </br>
+          <h4> Remove Duplicate files </h4>
+            <form action="/deleteDuplicates" method="POST" >
+              <label for="couseId">Course Id </lable>
+              <input name = "courseId" type = "text"  >
+              <button type="submit" class="btn btn-light">Submit</button>
+            </form>
+          </br>
+          <h4> List Enrollment Term ids</h4>
+            <form action="/listTermIds" method="GET" >
+              <button type="submit" class="btn btn-light">Submit</button>
+            </form>
+            <div id="term-id"></div>
+          </br>
+          <h4> Remove Empty Courses </h4>
+            <form action="/deleteEmptyCourses" method="POST" >
+              <label for="termId">Term Id </lable>
+              <input name = "termId" type = "text"  >
+              <button type="submit" class="btn btn-light">Remove</button>
+            </form>
+            <div id="emptyCourses"></div>
+          <h4> Get all the courses that have weird end dates </h4>
+            <form action="/getCourses" method="GET" >
+              <button type="submit" class="btn btn-light">Find</button>
+            </form>
+          <h4> Conclude all UFDN 1000L courses</h4>
+            <form action="/concludeCourses" method="POST" >
+              <button type="submit" class="btn btn-light">Submit</button>
+            </form>
+          <h4> Get comments and rubric info</h4>
+            <form action="/getComments" method="GET" >
+              <button type="submit" class="btn btn-light">Submit</button>
+            </form>
+    </div>
+</body>
+
+
+</html>
